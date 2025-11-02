@@ -38,10 +38,15 @@ const ProductUnit = () => {
 
   useEffect(() => {
     const keyword = searchKeyword.toLowerCase();
-    const result = units.filter((u) =>
-      u.serialNumber.toLowerCase().includes(keyword) ||
-      (u.colorId && u.colorId.name.toLowerCase().includes(keyword))
-    );
+
+    // กรอง + จัดเรียงล่าสุดก่อน
+    const result = units
+      .filter((u) =>
+        u.serialNumber.toLowerCase().includes(keyword) ||
+        (u.colorId && u.colorId.name.toLowerCase().includes(keyword))
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // ล่าสุดก่อน
+
     setFilteredUnits(result);
   }, [units, searchKeyword]);
 
@@ -49,7 +54,13 @@ const ProductUnit = () => {
     setLoading(true);
     try {
       const res = await axios.get('/api/productUnit');
-      setUnits(res.data);
+
+      // จัดเรียงล่าสุดก่อน
+      const sortedUnits = res.data.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setUnits(sortedUnits);
     } catch (err) {
       messageApi.open({
         type: 'error',

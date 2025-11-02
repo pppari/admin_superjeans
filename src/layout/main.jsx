@@ -136,7 +136,7 @@ const Main = ({ children, decodedToken }) => {
                   },
                   {
                     key: "8",
-                    label: <Link to="/product-unit">ยูนิตสินค้า</Link>,
+                    label: <Link to="/product-unit">รายการสินค้า</Link>,
                   },
                   {
                     key: "11",
@@ -164,10 +164,10 @@ const Main = ({ children, decodedToken }) => {
                 icon: <RiAdminLine />,
                 label: "การจัดการระบบ",
                 children: [
-                  {
-                    key: "12",
-                    label: <Link to="/promotion">จัดการภาพโปรโมชั่น</Link>,
-                  },
+                  // {
+                  //   key: "12",
+                  //   label: <Link to="/promotion">จัดการรูปภาพร้าน</Link>,
+                  // },
                   {
                     key: "13",
                     label: <Link to="/coupon">จัดการส่วนลด</Link>,
