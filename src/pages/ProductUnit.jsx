@@ -14,7 +14,7 @@ import axios from '../lib/axios';
 const { Search } = Input;
 const { Option } = Select;
 
-// Update status colors for the enum values.
+// กำหนดสีตามสถานะ
 const statusColor = {
   'in-stock': 'green',
   sold: 'blue',
@@ -30,9 +30,6 @@ const ProductUnit = () => {
   const [currentUnit, setCurrentUnit] = useState(null);
   const [form] = Form.useForm();
   const [messageApi, contextHolder] = message.useMessage();
-
-
-  // Use a single state for live search filtering.
   const [searchKeyword, setSearchKeyword] = useState('');
 
   useEffect(() => {
@@ -40,15 +37,14 @@ const ProductUnit = () => {
   }, []);
 
   useEffect(() => {
-    // Apply only the search filter
     const keyword = searchKeyword.toLowerCase();
     const result = units.filter((u) =>
-      u.serialNumber.toLowerCase().includes(keyword) || u.colorId.name.toLowerCase().includes(keyword)
+      u.serialNumber.toLowerCase().includes(keyword) ||
+      (u.colorId && u.colorId.name.toLowerCase().includes(keyword))
     );
     setFilteredUnits(result);
   }, [units, searchKeyword]);
 
-  // Fetch product units from the API.
   const fetchUnits = async () => {
     setLoading(true);
     try {
@@ -64,19 +60,16 @@ const ProductUnit = () => {
     }
   };
 
-  // Update search keyword on input change.
   const handleSearchChange = (e) => {
     setSearchKeyword(e.target.value);
   };
 
-  // Open the status edit modal.
   const handleEditStatus = (unit) => {
     setCurrentUnit(unit);
     form.setFieldsValue({ status: unit.status });
     setEditModal(true);
   };
 
-  // Submit status update.
   const handleStatusSubmit = async ({ status }) => {
     try {
       await axios.put(`/api/productUnit/status/${currentUnit.serialNumber}`, {
@@ -111,8 +104,6 @@ const ProductUnit = () => {
     }
   };
 
-
-  // Define table columns.
   const columns = [
     { title: 'รหัส', dataIndex: 'serialNumber', key: 'serialNumber' },
     {
@@ -140,7 +131,9 @@ const ProductUnit = () => {
       title: 'สถานะ',
       dataIndex: 'status',
       render: (status) => (
-        <Tag color={statusColor[status] || 'default'}>{statusContext(status)}</Tag>
+        <Tag color={statusColor[status] || 'default'}>
+          {statusContext(status)}
+        </Tag>
       ),
     },
     {
@@ -155,18 +148,16 @@ const ProductUnit = () => {
     <div className="p-4">
       {contextHolder}
 
-      <h2 className="text-2xl font-semibold mb-4">จัดการ Serial Number</h2>
+      <h2 className="text-2xl font-semibold mb-4">จัดการรายการสินค้า</h2>
 
-      {/* Search Filter */}
       <div className="mb-4" style={{ maxWidth: 300 }}>
         <Search
-          placeholder="ค้นหา Serial"
+          placeholder="ค้นหารายการสินค้า"
           allowClear
           onChange={handleSearchChange}
         />
       </div>
 
-      {/* Data Table */}
       <Table
         dataSource={filteredUnits}
         columns={columns}
@@ -175,7 +166,6 @@ const ProductUnit = () => {
         pagination={{ pageSize: 10 }}
       />
 
-      {/* Modal for updating status */}
       <Modal
         title="อัปเดตสถานะสินค้า"
         open={editModal}

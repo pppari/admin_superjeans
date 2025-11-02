@@ -7,11 +7,11 @@ import {
   Form,
   Popconfirm,
   Space,
-  Switch,
   message,
-  Tag,
+  Switch,
+  Select, // ✅ เพิ่ม Select จาก antd
 } from "antd";
-import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import axios from "../lib/axios";
 
 const Admin = () => {
@@ -37,100 +37,93 @@ const Admin = () => {
       const res = await axios.get("/api/admin");
       setAdmins(res.data);
     } catch (err) {
-      messageApi.open({
-        type: 'error',
-        content: 'โหลดข้อมูลล้มเหลว',
-      });
+      messageApi.open({ type: "error", content: "โหลดข้อมูลล้มเหลว" });
     } finally {
       setLoading(false);
     }
   };
 
+  // filter
   useEffect(() => {
     const lower = search.toLowerCase();
     setFilteredAdmins(
-      admins.filter((admin) => admin.email.toLowerCase().includes(lower))
+      admins.filter(
+        (admin) =>
+          admin.email.toLowerCase().includes(lower) ||
+          admin.name.toLowerCase().includes(lower) ||
+          admin.phone.toLowerCase().includes(lower)
+      )
     );
+    setCurrentPage(1);
   }, [search, admins]);
 
   const handleCreate = () => {
     setEditingAdmin(null);
     form.resetFields();
-    form.setFieldsValue({
-      isVerified: true
-    });
     setIsModalVisible(true);
   };
 
-  const handleEdit = (admin) => {
-    setEditingAdmin(admin);
-    form.setFieldsValue({
-      email: admin.email,
-      isVerified: admin.isVerified,
-    });
-    setIsModalVisible(true);
-  };
-
-  const handleDelete = async (id) => {
+  // ✅ เปลี่ยนสถานะด้วย Switch
+  const handleToggleStatus = async (admin) => {
+    const newStatus = admin.status === "active" ? "inactive" : "active";
     try {
-      await axios.patch(`/api/admin/${id}`);
+      await axios.put(`/api/admin/${admin._id}`, { status: newStatus });
+      setAdmins((prev) =>
+        prev.map((a) =>
+          a._id === admin._id ? { ...a, status: newStatus } : a
+        )
+      );
       messageApi.open({
-        type: 'success',
-        content: 'ลบข้อมูลสำเร็จ',
+        type: "success",
+        content: `เปลี่ยนสถานะเป็น ${
+          newStatus === "active" ? "ปกติ" : "ระงับ"
+        } แล้ว`,
       });
-      fetchAdmins();
-    } catch {
-      messageApi.open({
-        type: 'success',
-        content: 'ลบข้อมูลล้มเหลว',
-      });
+    } catch (err) {
+      messageApi.open({ type: "error", content: "เปลี่ยนสถานะล้มเหลว" });
     }
   };
 
   const handleFormSubmit = async () => {
     try {
       const values = await form.validateFields();
-      if (editingAdmin) {
-        await axios.put(`/api/admin/${editingAdmin._id}`, values);
-        messageApi.open({
-          type: 'success',
-          content: 'แก้ไขข้อมูลสำเร็จ',
-        });
-      } else {
-        await axios.post("/api/admin", values);
-        messageApi.open({
-          type: 'success',
-          content: 'สร้างข้อมูลสำเร็จ',
-        });
-      }
+      await axios.post("/api/admin", values);
+      messageApi.open({ type: "success", content: "สร้างข้อมูลสำเร็จ" });
       setIsModalVisible(false);
       fetchAdmins();
     } catch (err) {
-      messageApi.open({
-        type: 'error',
-        content: 'มีบางอย่างผิดพลาด',
-      });
+      messageApi.open({ type: "error", content: "มีบางอย่างผิดพลาด" });
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/api/admin/${id}`);
+      messageApi.open({ type: "success", content: "ลบข้อมูลสำเร็จ" });
+      fetchAdmins();
+    } catch (err) {
+      messageApi.open({ type: "error", content: "ลบข้อมูลล้มเหลว" });
     }
   };
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
-    return filteredAdmins.slice(start, start + pageSize);
+    const sortedAdmins = [...filteredAdmins].sort((a, b) => {
+      if (a.status === b.status) return 0;
+      return a.status === "active" ? -1 : 1;
+    });
+    return sortedAdmins.slice(start, start + pageSize);
   }, [filteredAdmins, currentPage]);
 
   return (
     <div className="p-4">
       {contextHolder}
-      <Space
-        className="mb-4"
-        direction="vertical"
-        size="middle"
-        style={{ width: "100%" }}
-      >
+      <Space direction="vertical" size="middle" style={{ width: "100%" }}>
         <h1 className="text-2xl font-semibold">จัดการแอดมิน</h1>
+
         <Space className="w-full justify-between">
           <Input.Search
-            placeholder="ค้นหาอีเมล..."
+            placeholder="ค้นหาอีเมล, ชื่อผู้ใช้, เบอร์โทร..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ maxWidth: 300 }}
@@ -152,81 +145,98 @@ const Admin = () => {
             onChange: setCurrentPage,
           }}
         >
-          <Table.Column title="อีเมล" dataIndex="email" key="email" />
+          <Table.Column title="ชื่อดูแลระบบ" dataIndex="name" />
+          <Table.Column title="เบอร์โทร" dataIndex="phone" />
+          <Table.Column title="อีเมล" dataIndex="email" />
+
+          {/* ✅ คอลัมน์สถานะเป็น Switch */}
           <Table.Column
             title="สถานะ"
-            dataIndex="isVerified"
-            key="isVerified"
-            render={(verified) => (
-              <Tag color={verified ? "green" : "red"}>
-                {verified ? "ปกติ" : "ระงับ"}
-              </Tag>
+            dataIndex="status"
+            render={(_, record) => (
+              <Switch
+                checked={record.status === "active"}
+                onChange={() => handleToggleStatus(record)}
+                checkedChildren="ปกติ"
+                unCheckedChildren="ระงับ"
+              />
             )}
           />
+
           <Table.Column
             title="จัดการ"
-            key="actions"
             render={(_, record) => (
-              <Space>
-                <Button
-                  onClick={() => handleEdit(record)}
-                >
-                  แก้ไข
-                </Button>
-                <Popconfirm
-                  title="คุณแน่ใจหรือไม่ว่าต้องการลบ?"
-                  onConfirm={() => handleDelete(record._id)}
-                  okText="ใช่"
-                  cancelText="ไม่"
-                >
-                  <Button danger>
-                    ลบ
-                  </Button>
-                </Popconfirm>
-              </Space>
+              <Popconfirm
+                title="คุณแน่ใจหรือไม่ว่าต้องการลบ?"
+                onConfirm={() => handleDelete(record._id)}
+                okText="ใช่"
+                cancelText="ไม่"
+              >
+                <Button danger>ลบ</Button>
+              </Popconfirm>
             )}
           />
         </Table>
       </Space>
 
+      {/* ✅ Modal สำหรับ “สร้าง” เท่านั้น */}
       <Modal
-        title={editingAdmin ? "แก้ไขผู้ดูแลระบบ" : "สร้างผู้ดูแลระบบ"}
-        visible={isModalVisible}
+        title="สร้างผู้ดูแลระบบ"
+        open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         onOk={handleFormSubmit}
-        okText={editingAdmin ? "อัพเดต" : "สร้าง"}
+        okText="สร้าง"
       >
-        <Form form={form} layout="vertical">
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={{
+            name: "",
+            email: "",
+            password: "",
+            phone: "",
+            status: "active",
+          }}
+        >
           <Form.Item
-            name="email"
-            label="อีเมล"
-            rules={[
-              {
-                required: true,
-                type: "email",
-                message: "กรุณาระบุอีเมลที่ถูกต้อง",
-              },
-            ]}
+            name="name"
+            label="ชื่อดูแลระบบ"
+            rules={[{ required: true, message: "กรุณาระบุชื่อผู้ใช้" }]}
           >
             <Input />
           </Form.Item>
 
-          {!editingAdmin && (
-            <Form.Item
-              name="password"
-              label="รหัสผ่าน"
-              rules={[{ required: true, message: "กรุณาระบุรหัสผ่าน" }]}
-            >
-              <Input.Password />
-            </Form.Item>
-          )}
+          <Form.Item
+            name="email"
+            label="อีเมล"
+            rules={[
+              { required: true, type: "email", message: "กรุณาระบุอีเมลที่ถูกต้อง" },
+            ]}
+          >
+            <Input autoComplete="off" />
+          </Form.Item>
 
           <Form.Item
-            name="isVerified"
-            label="สถานะ"
-            valuePropName="checked"
+            name="password"
+            label="รหัสผ่าน"
+            rules={[{ required: true, message: "กรุณาระบุรหัสผ่าน" }]}
           >
-            <Switch checkedChildren="ปกติ" unCheckedChildren="ระงับ" />
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+
+          <Form.Item
+            name="phone"
+            label="เบอร์โทร"
+            rules={[{ required: true, message: "กรุณาระบุเบอร์โทร" }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item name="status" label="สถานะ">
+            <Select>
+              <Select.Option value="active">ปกติ</Select.Option>
+              <Select.Option value="inactive">ระงับ</Select.Option>
+            </Select>
           </Form.Item>
         </Form>
       </Modal>
