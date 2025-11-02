@@ -80,6 +80,7 @@ const UserList = () => {
     //   key: 'isVerified',
     //   render: v => <Tag color={v ? 'green' : 'gray'}>{v ? 'ยืนยันแล้ว' : 'ยังไม่ยืนยัน'}</Tag>
     // },
+<<<<<<< HEAD
     // { title: 'ชื่อ-สกุล', dataIndex: ['address', 'fullname'], key: 'fullname' },
     // { title: 'เบอร์โทร', dataIndex: ['address', 'phone'], key: 'phone' },
     // { title: 'ที่อยู่', dataIndex: ['address', 'address'], key: 'address' },
@@ -87,6 +88,15 @@ const UserList = () => {
     // { title: 'อำเภอ', dataIndex: ['address', 'amphure'], key: 'amphure' },
     // { title: 'จังหวัด', dataIndex: ['address', 'province'], key: 'province' },
     // { title: 'รหัสไปรษณีย์', dataIndex: ['address', 'zip_code'], key: 'zip_code' },
+=======
+    { title: 'ชื่อ-สกุล', dataIndex: ['address', 'fullname'], key: 'fullname' },
+    { title: 'เบอร์โทร', dataIndex: ['address', 'phone'], key: 'phone' },
+    { title: 'ที่อยู่', dataIndex: ['address', 'address'], key: 'address' },
+    { title: 'ตำบล', dataIndex: ['address', 'tambon'], key: 'tambon' },
+    { title: 'อำเภอ', dataIndex: ['address', 'amphure'], key: 'amphure' },
+    { title: 'จังหวัด', dataIndex: ['address', 'province'], key: 'province' },
+    { title: 'รหัสไปรษณีย์', dataIndex: ['address', 'zip_code'], key: 'zip_code' },
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
     { title: 'สร้างขึ้นเมื่อ', dataIndex: 'created_at', key: 'created_at', render: dateFormat },
     {
       title: 'Actions',

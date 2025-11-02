@@ -41,6 +41,10 @@ const Product = () => {
   // -----------------------
   // ฟังก์ชันดึงข้อมูล
   // -----------------------
+<<<<<<< HEAD
+=======
+
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -74,9 +78,13 @@ const Product = () => {
   const fetchSubCategories = async (categoryId) => {
     if (!categoryId) return setSubCategories([]);
     try {
+<<<<<<< HEAD
       // ใช้ path parameter ให้ตรงกับ backend
       const res = await axios.get(`/api/sub-categories/category/${categoryId}`);
 
+=======
+      const res = await axios.get(`/api/subcategories/category/${categoryId}`);
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
       const data = Array.isArray(res.data?.data)
         ? res.data.data
         : Array.isArray(res.data)
@@ -105,6 +113,10 @@ const Product = () => {
   // -----------------------
   // ฟังก์ชันจัดการ
   // -----------------------
+<<<<<<< HEAD
+=======
+
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const handleSearch = (value) => {
     const searchVal = value?.toLowerCase() || '';
     const filtered = products.filter(
@@ -167,6 +179,10 @@ const Product = () => {
   // -----------------------
   // ตารางสินค้า
   // -----------------------
+<<<<<<< HEAD
+=======
+
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const columns = [
     { title: 'ชื่อ', dataIndex: 'name', key: 'name', render: (v) => v || '-' },
     { title: 'SKU', dataIndex: 'sku', key: 'sku', render: (v) => v || '-' },
@@ -221,6 +237,10 @@ const Product = () => {
         okText={editingProduct ? 'บันทึก' : 'เพิ่ม'}
         cancelText="ยกเลิก"
       >
+<<<<<<< HEAD
+=======
+
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
         <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
           <Form.Item name="name" label="ชื่อ" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="description" label="คำอธิบาย"><Input.TextArea /></Form.Item>
@@ -232,21 +252,35 @@ const Product = () => {
           <Form.Item name="categoryId" label="ประเภท" rules={[{ required: true }]}>
             <Select
               placeholder="เลือกประเภท"
+<<<<<<< HEAD
               onChange={(value) => {
                 form.setFieldsValue({ subCategoryId: null });
                 fetchSubCategories(value); // ใน fetchSubCategories ก็ต้องแก้ด้วย
               }}
             >
 
+=======
+              onChange={(value) => { form.setFieldsValue({ subCategoryId: null }); fetchSubCategories(value); }}
+              dropdownRender={menu => (
+                <div style={{ maxHeight: 200, overflowY: 'auto' }}>{menu}</div>
+              )}
+            >
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
               {Array.isArray(categories) && categories.map((cat) => <Option key={cat._id} value={cat._id}>{cat.name}</Option>)}
             </Select>
           </Form.Item>
 
+<<<<<<< HEAD
           <Form.Item name="subCategoryId" label="ประเภทย่อย" rules={[{ required: true }]} >
             <Select placeholder="เลือกประเภทย่อย">
               {Array.isArray(subCategories) && subCategories.map((sub) => (
                 <Option key={sub._id} value={sub._id}>{sub.name}</Option>
               ))}
+=======
+          <Form.Item name="subCategoryId" label="ประเภทย่อย" rules={[{ required: true }]}>
+            <Select placeholder="เลือกประเภทย่อย">
+              {Array.isArray(subCategories) && subCategories.map((sub) => <Option key={sub._id} value={sub._id}>{sub.name}</Option>)}
+>>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
             </Select>
           </Form.Item>
 
