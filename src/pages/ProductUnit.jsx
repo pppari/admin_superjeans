@@ -38,9 +38,7 @@ const ProductUnit = () => {
 
   useEffect(() => {
     const keyword = searchKeyword.toLowerCase();
-<<<<<<< HEAD
 
-    // กรอง + จัดเรียงล่าสุดก่อน
     const result = units
       .filter((u) =>
         u.serialNumber.toLowerCase().includes(keyword) ||
@@ -48,12 +46,6 @@ const ProductUnit = () => {
       )
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // ล่าสุดก่อน
 
-=======
-    const result = units.filter((u) =>
-      u.serialNumber.toLowerCase().includes(keyword) ||
-      (u.colorId && u.colorId.name.toLowerCase().includes(keyword))
-    );
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
     setFilteredUnits(result);
   }, [units, searchKeyword]);
 
@@ -61,7 +53,6 @@ const ProductUnit = () => {
     setLoading(true);
     try {
       const res = await axios.get('/api/productUnit');
-<<<<<<< HEAD
 
       // จัดเรียงล่าสุดก่อน
       const sortedUnits = res.data.sort(
@@ -69,9 +60,6 @@ const ProductUnit = () => {
       );
 
       setUnits(sortedUnits);
-=======
-      setUnits(res.data);
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
     } catch (err) {
       messageApi.open({
         type: 'error',
