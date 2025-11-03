@@ -38,9 +38,9 @@ const Product = () => {
     fetchRooms();
   }, []);
 
-  // -----------------------
+  
   // ฟังก์ชันดึงข้อมูล
-  // -----------------------
+  
   const fetchProducts = async () => {
     setLoading(true);
     try {
