@@ -41,10 +41,6 @@ const Product = () => {
   // -----------------------
   // ฟังก์ชันดึงข้อมูล
   // -----------------------
-<<<<<<< HEAD
-=======
-
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -78,13 +74,7 @@ const Product = () => {
   const fetchSubCategories = async (categoryId) => {
     if (!categoryId) return setSubCategories([]);
     try {
-<<<<<<< HEAD
-      // ใช้ path parameter ให้ตรงกับ backend
       const res = await axios.get(`/api/sub-categories/category/${categoryId}`);
-
-=======
-      const res = await axios.get(`/api/subcategories/category/${categoryId}`);
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
       const data = Array.isArray(res.data?.data)
         ? res.data.data
         : Array.isArray(res.data)
@@ -113,10 +103,6 @@ const Product = () => {
   // -----------------------
   // ฟังก์ชันจัดการ
   // -----------------------
-<<<<<<< HEAD
-=======
-
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const handleSearch = (value) => {
     const searchVal = value?.toLowerCase() || '';
     const filtered = products.filter(
@@ -179,10 +165,6 @@ const Product = () => {
   // -----------------------
   // ตารางสินค้า
   // -----------------------
-<<<<<<< HEAD
-=======
-
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
   const columns = [
     { title: 'ชื่อ', dataIndex: 'name', key: 'name', render: (v) => v || '-' },
     { title: 'SKU', dataIndex: 'sku', key: 'sku', render: (v) => v || '-' },
@@ -213,12 +195,18 @@ const Product = () => {
 
       <div className="flex justify-between items-center mb-4">
         <Search placeholder="ค้นหา..." onSearch={handleSearch} className="max-w-md" allowClear />
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => {
-          form.resetFields();
-          setEditingProduct(null);
-          setSubCategories([]);
-          setModalVisible(true);
-        }}>เพิ่มสินค้า</Button>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            form.resetFields();
+            setEditingProduct(null);
+            setSubCategories([]);
+            setModalVisible(true);
+          }}
+        >
+          เพิ่มสินค้า
+        </Button>
       </div>
 
       <Table
@@ -237,56 +225,56 @@ const Product = () => {
         okText={editingProduct ? 'บันทึก' : 'เพิ่ม'}
         cancelText="ยกเลิก"
       >
-<<<<<<< HEAD
-=======
-
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
         <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
-          <Form.Item name="name" label="ชื่อ" rules={[{ required: true }]}><Input /></Form.Item>
-          <Form.Item name="description" label="คำอธิบาย"><Input.TextArea /></Form.Item>
-          <Form.Item name="price" label="ราคา"><InputNumber min={0} className="w-full" /></Form.Item>
-          <Form.Item name="weight" label="น้ำหนัก"><Input /></Form.Item>
-          <Form.Item name="material" label="วัสดุ"><Input /></Form.Item>
-          <Form.Item name="dimensions" label="ขนาด"><Input /></Form.Item>
+          <Form.Item name="name" label="ชื่อ" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="คำอธิบาย">
+            <Input.TextArea />
+          </Form.Item>
+          <Form.Item name="price" label="ราคา">
+            <InputNumber min={0} className="w-full" />
+          </Form.Item>
+          <Form.Item name="weight" label="น้ำหนัก">
+            <Input />
+          </Form.Item>
+          <Form.Item name="material" label="วัสดุ">
+            <Input />
+          </Form.Item>
+          <Form.Item name="dimensions" label="ขนาด">
+            <Input />
+          </Form.Item>
 
           <Form.Item name="categoryId" label="ประเภท" rules={[{ required: true }]}>
             <Select
               placeholder="เลือกประเภท"
-<<<<<<< HEAD
               onChange={(value) => {
                 form.setFieldsValue({ subCategoryId: null });
-                fetchSubCategories(value); // ใน fetchSubCategories ก็ต้องแก้ด้วย
+                fetchSubCategories(value);
               }}
-            >
-
-=======
-              onChange={(value) => { form.setFieldsValue({ subCategoryId: null }); fetchSubCategories(value); }}
-              dropdownRender={menu => (
+              dropdownRender={(menu) => (
                 <div style={{ maxHeight: 200, overflowY: 'auto' }}>{menu}</div>
               )}
             >
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
-              {Array.isArray(categories) && categories.map((cat) => <Option key={cat._id} value={cat._id}>{cat.name}</Option>)}
+              {categories.map((cat) => (
+                <Option key={cat._id} value={cat._id}>{cat.name}</Option>
+              ))}
             </Select>
           </Form.Item>
 
-<<<<<<< HEAD
-          <Form.Item name="subCategoryId" label="ประเภทย่อย" rules={[{ required: true }]} >
-            <Select placeholder="เลือกประเภทย่อย">
-              {Array.isArray(subCategories) && subCategories.map((sub) => (
-                <Option key={sub._id} value={sub._id}>{sub.name}</Option>
-              ))}
-=======
           <Form.Item name="subCategoryId" label="ประเภทย่อย" rules={[{ required: true }]}>
             <Select placeholder="เลือกประเภทย่อย">
-              {Array.isArray(subCategories) && subCategories.map((sub) => <Option key={sub._id} value={sub._id}>{sub.name}</Option>)}
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
+              {subCategories.map((sub) => (
+                <Option key={sub._id} value={sub._id}>{sub.name}</Option>
+              ))}
             </Select>
           </Form.Item>
 
           <Form.Item name="roomId" label="ห้อง" rules={[{ required: true }]}>
             <Select placeholder="เลือกห้อง">
-              {Array.isArray(rooms) && rooms.map((room) => <Option key={room._id} value={room._id}>{room.name}</Option>)}
+              {rooms.map((room) => (
+                <Option key={room._id} value={room._id}>{room.name}</Option>
+              ))}
             </Select>
           </Form.Item>
         </Form>
