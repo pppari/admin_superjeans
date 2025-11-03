@@ -88,7 +88,7 @@ const Main = ({ children, decodedToken }) => {
         <div className="flex flex-col h-full">
           <div className="p-4 border-b border-gray-200">
             {!collapsed && (
-             <img src={logo} alt="logo" className="w-full" />
+              <img src={logo} alt="logo" className="w-full" />
             )}
           </div>
 
@@ -136,11 +136,7 @@ const Main = ({ children, decodedToken }) => {
                   },
                   {
                     key: "8",
-<<<<<<< HEAD
                     label: <Link to="/product-unit">รายการสินค้า</Link>,
-=======
-                    label: <Link to="/product-unit">ยูนิตสินค้า</Link>,
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
                   },
                   {
                     key: "11",
@@ -168,17 +164,10 @@ const Main = ({ children, decodedToken }) => {
                 icon: <RiAdminLine />,
                 label: "การจัดการระบบ",
                 children: [
-<<<<<<< HEAD
                   // {
                   //   key: "12",
-                  //   label: <Link to="/promotion">จัดการรูปภาพร้าน</Link>,
+                  //   label: <Link to="/promotion">จัดการภาพโปรโมชั่น</Link>,
                   // },
-=======
-                  {
-                    key: "12",
-                    label: <Link to="/promotion">จัดการภาพโปรโมชั่น</Link>,
-                  },
->>>>>>> f8c3aaf75f8b3095f106d3021b6916ea2b5c9b43
                   {
                     key: "13",
                     label: <Link to="/coupon">จัดการส่วนลด</Link>,
