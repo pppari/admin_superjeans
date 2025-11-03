@@ -8,8 +8,8 @@ const { Option } = Select;
 
 const ProductBatchForm = ({ initialValues = {} }) => {
   const [form] = Form.useForm();
-  const [products, setProducts] = useState([]); // เริ่มต้นเป็น array
-  const [category, setCategory] = useState([]); // เริ่มต้นเป็น array
+  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState([]);
   const [productColors, setProductColors] = useState({});
   const [isEdit, setIsEdit] = useState(false);
   const navigate = useNavigate();
@@ -22,11 +22,7 @@ const ProductBatchForm = ({ initialValues = {} }) => {
   const fetchProducts = async () => {
     try {
       const res = await axios.get('/api/products');
-      const data = Array.isArray(res.data?.data)
-        ? res.data.data
-        : Array.isArray(res.data)
-        ? res.data
-        : [];
+      const data = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
       setProducts(data);
     } catch (err) {
       console.error('Failed to fetch products:', err);
@@ -37,11 +33,7 @@ const ProductBatchForm = ({ initialValues = {} }) => {
   const fetchCategory = async () => {
     try {
       const res = await axios.get('/api/categories');
-      const data = Array.isArray(res.data?.data)
-        ? res.data.data
-        : Array.isArray(res.data)
-        ? res.data
-        : [];
+      const data = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
       setCategory(data);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
@@ -54,11 +46,7 @@ const ProductBatchForm = ({ initialValues = {} }) => {
       if (!productId || productColors[productId]) return;
       try {
         const res = await axios.get(`/api/productColor/${productId}`);
-        const data = Array.isArray(res.data?.data)
-          ? res.data.data
-          : Array.isArray(res.data)
-          ? res.data
-          : [];
+        const data = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
         setProductColors((prev) => ({ ...prev, [productId]: data }));
       } catch (err) {
         console.error('Failed to fetch product colors:', err);
@@ -76,9 +64,9 @@ const ProductBatchForm = ({ initialValues = {} }) => {
       const batch = res.data;
       const normalizedProducts = Array.isArray(batch.products)
         ? batch.products.map((p) => ({
-            productId: p.productId._id,
+            productId: typeof p.productId === 'object' ? p.productId._id : p.productId,
             quantity: p.quantity,
-            colorId: p.colorId?._id || undefined,
+            colorId: p.colorId ? (typeof p.colorId === 'object' ? p.colorId._id : p.colorId) : undefined,
           }))
         : [];
       form.setFieldsValue({ ...batch, products: normalizedProducts });
@@ -95,7 +83,6 @@ const ProductBatchForm = ({ initialValues = {} }) => {
     fetchProducts();
     fetchBatchDetails();
     fetchCategory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   // --------------------------
@@ -104,30 +91,37 @@ const ProductBatchForm = ({ initialValues = {} }) => {
   const handleSubmit = async (values) => {
     const payload = {
       ...values,
-      totalProducts: Array.isArray(values.products) ? values.products.length : 0,
-      totalQuantity: Array.isArray(values.products)
-        ? values.products.reduce((sum, product) => sum + (product.quantity || 0), 0)
-        : 0,
+      batchCode: `BATCH-${Date.now()}`,
+      products: values.products.map((p) => ({
+        productId: typeof p.productId === 'object' ? p.productId._id : p.productId,
+        colorId: typeof p.colorId === 'object' ? p.colorId._id : p.colorId,
+        quantity: p.quantity || 0,
+      })),
+      totalProducts: values.products?.length || 0,
+      totalQuantity: values.products?.reduce((sum, p) => sum + (p.quantity || 0), 0),
     };
+
+    console.log('Payload to send:', payload);
+
     try {
       if (isEdit) {
         await axios.put(`/api/product-batches/${id}`, payload);
-        messageApi.open({ type: 'success', content: 'แก้ไขข้อมูลสำเร็จ' });
+        messageApi.success('แก้ไขล็อตสำเร็จ');
       } else {
         await axios.post('/api/product-batches', payload);
-        messageApi.open({ type: 'success', content: 'สร้างข้อมูลสำเร็จ' });
+        messageApi.success('สร้างล็อตสำเร็จ');
       }
       navigate('/batch');
     } catch (err) {
-      messageApi.open({ type: 'error', content: 'มีบางอย่างผิดพลาด' });
-      console.error('Form submission failed:', err);
+      console.error('Form submission failed:', err.response?.data || err);
+      messageApi.error('มีบางอย่างผิดพลาด');
     }
   };
 
   // --------------------------
   // Product item component
   // --------------------------
-  const ProductFormItem = ({ field, remove, form, products, productColors, fetchProductColors }) => {
+  const ProductFormItem = ({ field, remove }) => {
     const selectedProductId = Form.useWatch(['products', field.name, 'productId'], { form });
     const colorsForProduct = Array.isArray(productColors[selectedProductId])
       ? productColors[selectedProductId]
@@ -138,33 +132,29 @@ const ProductBatchForm = ({ initialValues = {} }) => {
         <Form.Item
           name={[field.name, 'productId']}
           fieldKey={[field.fieldKey, 'productId']}
-          rules={[{ required: true, message: 'กรุณาเลือกสินค้า' }]}
+          rules={[{ required: true, message: 'Please select a product' }]}
         >
           <Select
             showSearch
             placeholder="เลือกสินค้า"
             style={{ width: 250 }}
             optionFilterProp="label"
-            filterOption={(input, option) =>
-              option.label.toLowerCase().includes(input.toLowerCase())
-            }
+            filterOption={(input, option) => option.label.toLowerCase().includes(input.toLowerCase())}
             onChange={(value) => {
               form.setFieldValue(['products', field.name, 'colorId'], undefined);
               fetchProductColors(value);
             }}
-            options={Array.isArray(products)
-              ? products.map((product) => ({
-                  value: product._id,
-                  label: `${product.sku} / ${product.name}`,
-                }))
-              : []}
+            options={products.map((product) => ({
+              value: product._id,
+              label: `${product.sku} / ${product.name}`,
+            }))}
           />
         </Form.Item>
 
         <Form.Item
           name={[field.name, 'colorId']}
           fieldKey={[field.fieldKey, 'colorId']}
-          rules={[{ required: true, message: 'กรุณาเลือกสีสินค้า' }]}
+          rules={[{ required: true, message: 'Please select a color' }]}
         >
           <Select
             placeholder="เลือกสีสินค้า"
@@ -182,19 +172,31 @@ const ProductBatchForm = ({ initialValues = {} }) => {
         <Form.Item
           name={[field.name, 'quantity']}
           fieldKey={[field.fieldKey, 'quantity']}
-          rules={[{ required: true, message: 'กรุณาระบุจำนวน' }]}
+          rules={[{ required: true, message: 'Please enter quantity' }]}
         >
-          <InputNumber
-            min={1}
-            placeholder="จำนวน"
-            disabled={colorsForProduct.length === 0}
-          />
+          <InputNumber min={1} placeholder="จำนวน" disabled={colorsForProduct.length === 0} />
         </Form.Item>
 
-        {!isEdit ? <MinusCircleOutlined onClick={() => remove(field.name)} /> : null}
+        {!isEdit && <MinusCircleOutlined onClick={() => remove(field.name)} />}
       </Space>
     );
   };
+
+  // --------------------------
+  // Auto-update batchName safely
+  // --------------------------
+  const productsInForm = Form.useWatch('products', form) || [];
+
+  useEffect(() => {
+    const selectedNames = productsInForm
+      .filter(p => p && p.productId)
+      .map((p) => {
+        const found = products.find(prod => prod._id === (p.productId?._id || p.productId));
+        return found?.name;
+      })
+      .filter(Boolean);
+    form.setFieldValue('batchName', selectedNames.join(', '));
+  }, [productsInForm, products, form]);
 
   // --------------------------
   // Render
@@ -202,17 +204,14 @@ const ProductBatchForm = ({ initialValues = {} }) => {
   return (
     <Form form={form} layout="vertical" initialValues={initialValues} onFinish={handleSubmit}>
       {contextHolder}
-      <Form.Item name="batchName" label="ชื่อล็อตสินค้า" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
 
-      <Form.Item name="description" label="คำอธิบาย">
-        <Input.TextArea rows={2} />
+      <Form.Item name="batchName" label="ชื่อล็อตสินค้า">
+        <Input placeholder="จะถูกตั้งชื่ออัตโนมัติจากสินค้า" readOnly />
       </Form.Item>
 
       <Form.Item name="tags" label="แท็ก">
         <Select mode="tags" style={{ width: '100%' }} placeholder="ป้อนแท็ก">
-          {(Array.isArray(category) ? category : []).map((item) => (
+          {category.map((item) => (
             <Option key={item._id} value={item.name}>
               {item.name}
             </Option>
@@ -226,23 +225,15 @@ const ProductBatchForm = ({ initialValues = {} }) => {
         {(fields, { add, remove }) => (
           <div className="flex flex-col gap-2">
             {fields.map((field) => (
-              <ProductFormItem
-                key={field.key}
-                field={field}
-                remove={remove}
-                form={form}
-                products={products}
-                productColors={productColors}
-                fetchProductColors={fetchProductColors}
-              />
+              <ProductFormItem key={field.key} field={field} remove={remove} />
             ))}
-            <Form.Item>
-              {!isEdit ? (
+            {!isEdit && (
+              <Form.Item>
                 <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
                   เพิ่มสินค้า
                 </Button>
-              ) : null}
-            </Form.Item>
+              </Form.Item>
+            )}
           </div>
         )}
       </Form.List>

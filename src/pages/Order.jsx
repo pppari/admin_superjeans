@@ -173,7 +173,7 @@ const Order = () => {
             title: 'ดำเนินการ',
             key: 'action',
             render: (_, record) => (
-                <Button onClick={() => showModal(record)} type="link">View</Button>
+                <Button onClick={() => showModal(record)} type="link">รายละเอียด</Button>
             ),
         },
     ];

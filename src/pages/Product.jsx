@@ -1,297 +1,338 @@
-// src/pages/Product.js
-import React, { useEffect, useState } from 'react';
-import {
-  Table,
-  Input,
-  Button,
-  Modal,
-  Form,
-  InputNumber,
-  Select,
-  message,
-} from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+// src/pages/ProductBatchForm.jsx
+import { Button, Form, Input, Select, InputNumber, Space, Divider, message } from 'antd';
+import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from '../lib/axios';
-import toPrice from '../lib/toPrice';
 
-const { Search } = Input;
 const { Option } = Select;
 
-const Product = () => {
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [subCategories, setSubCategories] = useState([]);
-  const [rooms, setRooms] = useState([]);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [deleteProductId, setDeleteProductId] = useState(null);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+const ProductBatchForm = ({ initialValues = {} }) => {
   const [form] = Form.useForm();
+  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState([]);
+  const [productColors, setProductColors] = useState({});
+  const [isEdit, setIsEdit] = useState(false);
+  const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
+  const { id } = useParams();
 
-  // โหลดข้อมูลเริ่มต้น
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-    fetchRooms();
-  }, []);
+  // =========================
+  // Helpers
+  // =========================
+  const toId = (v) => (typeof v === 'object' && v?._id ? v._id : v);
+  const safeNumber = (v, fallback = 0) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
 
-  
-  // ฟังก์ชันดึงข้อมูล
-  
-  const fetchProducts = async () => {
-    setLoading(true);
+  // =========================
+  // Fetch functions
+  // =========================
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await axios.get('/api/products');
       const data = Array.isArray(res.data?.data)
         ? res.data.data
         : Array.isArray(res.data)
-          ? res.data
-          : [];
+        ? res.data
+        : [];
       setProducts(data);
-      setFilteredProducts(data);
     } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'โหลดสินค้าล้มเหลว' });
-    } finally {
-      setLoading(false);
+      console.error('Failed to fetch products:', err);
+      setProducts([]);
+      messageApi.error('โหลดรายการสินค้าไม่สำเร็จ');
     }
-  };
+  }, [messageApi]);
 
-  const fetchCategories = async () => {
+  const fetchCategory = useCallback(async () => {
     try {
       const res = await axios.get('/api/categories');
-      const data = Array.isArray(res.data) ? res.data : [];
-      setCategories(data);
-    } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'โหลดประเภทหลักล้มเหลว' });
-    }
-  };
-
-  const fetchSubCategories = async (categoryId) => {
-    if (!categoryId) return setSubCategories([]);
-    try {
-      const res = await axios.get(`/api/sub-categories/category/${categoryId}`);
       const data = Array.isArray(res.data?.data)
         ? res.data.data
         : Array.isArray(res.data)
+        ? res.data
+        : [];
+      setCategory(data);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      setCategory([]);
+      // ไม่จำเป็นต้อง error เสมอไป
+    }
+  }, []);
+
+  const fetchProductColors = useCallback(
+    async (productId) => {
+      const pid = toId(productId);
+      if (!pid) return;
+      // ใช้ cache ป้องกัน call ซ้ำ
+      if (productColors[pid]) return;
+
+      try {
+        const res = await axios.get(`/api/productColor/${pid}`);
+        const data = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
           ? res.data
           : [];
-      setSubCategories(data);
-      return data;
-    } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'โหลดประเภทย่อยล้มเหลว' });
-      setSubCategories([]);
-    }
-  };
-
-  const fetchRooms = async () => {
-    try {
-      const res = await axios.get('/api/rooms');
-      const data = Array.isArray(res.data) ? res.data : [];
-      setRooms(data);
-    } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'โหลดห้องล้มเหลว' });
-    }
-  };
-
-  // -----------------------
-  // ฟังก์ชันจัดการ
-  // -----------------------
-  const handleSearch = (value) => {
-    const searchVal = value?.toLowerCase() || '';
-    const filtered = products.filter(
-      (p) =>
-        (p.name || '').toLowerCase().includes(searchVal) ||
-        (p.categoryId?.name || '').toLowerCase().includes(searchVal) ||
-        (p.subCategoryId?.name || '').toLowerCase().includes(searchVal) ||
-        (p.sku || '').toLowerCase().includes(searchVal)
-    );
-    setFilteredProducts(filtered);
-  };
-
-  const handleFormSubmit = async (values) => {
-    try {
-      if (editingProduct) {
-        await axios.put(`/api/products/${editingProduct._id}`, values);
-        messageApi.open({ type: 'success', content: 'แก้ไขข้อมูลสำเร็จ' });
-      } else {
-        await axios.post('/api/products/create', values);
-        messageApi.open({ type: 'success', content: 'สร้างข้อมูลสำเร็จ' });
+        setProductColors((prev) => ({ ...prev, [pid]: data }));
+      } catch (err) {
+        console.error('Failed to fetch product colors:', err);
+        setProductColors((prev) => ({ ...prev, [pid]: [] }));
       }
-      setModalVisible(false);
-      form.resetFields();
-      setEditingProduct(null);
-      fetchProducts();
-    } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'มีบางอย่างผิดพลาด' });
-    }
-  };
-
-  const handleEdit = async (product) => {
-    setEditingProduct(product);
-    setModalVisible(true);
-
-    if (product.categoryId?._id) {
-      await fetchSubCategories(product.categoryId._id);
-    }
-
-    form.setFieldsValue({
-      ...product,
-      categoryId: product.categoryId?._id || null,
-      subCategoryId: product.subCategoryId?._id || null,
-      roomId: product.roomId?._id || null,
-    });
-  };
-
-  const deleteProduct = async (id) => {
-    try {
-      await axios.delete(`/api/products/${id}`);
-      messageApi.open({ type: 'success', content: 'ลบข้อมูลสำเร็จ' });
-      fetchProducts();
-      setIsDeleteModalVisible(false);
-    } catch (err) {
-      console.error(err);
-      messageApi.open({ type: 'error', content: 'ลบข้อมูลล้มเหลว' });
-    }
-  };
-
-  // -----------------------
-  // ตารางสินค้า
-  // -----------------------
-  const columns = [
-    { title: 'ชื่อ', dataIndex: 'name', key: 'name', render: (v) => v || '-' },
-    { title: 'SKU', dataIndex: 'sku', key: 'sku', render: (v) => v || '-' },
-    { title: 'ราคา', dataIndex: 'price', key: 'price', render: (v) => (v != null ? toPrice(v) : '-') },
-    { title: 'ประเภท', key: 'categoryId', render: (_, record) => record.categoryId?.name || '-' },
-    { title: 'ประเภทย่อย', key: 'subCategoryId', render: (_, record) => record.subCategoryId?.name || '-' },
-    { title: 'ห้อง', key: 'roomId', render: (_, record) => record.roomId?.name || '-' },
-    {
-      title: 'ดำเนินการ',
-      key: 'action',
-      render: (_, record) => (
-        <>
-          <Button style={{ marginRight: 8 }} onClick={() => window.open(`/product/${record._id}`, '_blank')}>ลักษณะ</Button>
-          <Button style={{ marginRight: 8 }} onClick={() => handleEdit(record)}>แก้ไข</Button>
-          <Button danger onClick={() => { setDeleteProductId(record._id); setIsDeleteModalVisible(true); }}>ลบ</Button>
-        </>
-      ),
     },
-  ];
+    [productColors]
+  );
 
-  // -----------------------
-  // JSX Render
-  // -----------------------
-  return (
-    <div className="p-4">
-      {contextHolder}
-      <h2 className="text-2xl font-semibold mb-4">จัดการสินค้า</h2>
+  const fetchBatchDetails = useCallback(async () => {
+    if (!id || id === 'create') return;
+    setIsEdit(true);
+    try {
+      const res = await axios.get(`/api/product-batches/${id}`);
+      // สมมติ backend ส่งมาเป็น { ...batch, products: [...] }
+      const batch = res.data?.data || res.data;
 
-      <div className="flex justify-between items-center mb-4">
-        <Search placeholder="ค้นหา..." onSearch={handleSearch} className="max-w-md" allowClear />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            form.resetFields();
-            setEditingProduct(null);
-            setSubCategories([]);
-            setModalVisible(true);
-          }}
+      const normalizedProducts = Array.isArray(batch?.products)
+        ? batch.products.map((p) => ({
+            productId: toId(p.productId),
+            quantity: safeNumber(p.quantity, 1),
+            colorId: p.colorId ? toId(p.colorId) : undefined,
+          }))
+        : [];
+
+      form.setFieldsValue({
+        ...batch,
+        products: normalizedProducts,
+      });
+
+      // เตรียมสีสำหรับสินค้าที่มีอยู่ในล็อต
+      for (const item of normalizedProducts) {
+        await fetchProductColors(item.productId);
+      }
+    } catch (err) {
+      console.error('Failed to fetch batch details:', err);
+      messageApi.error('โหลดข้อมูลล็อตไม่สำเร็จ');
+    }
+  }, [form, id, fetchProductColors, messageApi]);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchBatchDetails();
+    fetchCategory();
+  }, [id, fetchProducts, fetchBatchDetails, fetchCategory]);
+
+  // =========================
+  // Submit
+  // =========================
+  const handleSubmit = async (values) => {
+    // ตรวจอย่างน้อย 1 รายการ
+    if (!Array.isArray(values.products) || values.products.length === 0) {
+      messageApi.error('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
+      return;
+    }
+
+    const cleaned = values.products.map((p, idx) => {
+      const productId = toId(p.productId);
+      const colorId = p.colorId ? toId(p.colorId) : undefined;
+      const quantity = safeNumber(p.quantity, 0);
+
+      if (!productId) {
+        throw new Error(`แถวที่ ${idx + 1}: กรุณาเลือกสินค้า`);
+      }
+      if (!colorId) {
+        throw new Error(`แถวที่ ${idx + 1}: กรุณาเลือกสีสินค้า`);
+      }
+      if (!quantity || quantity < 1) {
+        throw new Error(`แถวที่ ${idx + 1}: จำนวนต้องมากกว่าหรือเท่ากับ 1`);
+      }
+
+      return { productId, colorId, quantity };
+    });
+
+    const payload = {
+      ...values,
+      // ถ้าแก้ไข ให้คง batchCode เดิมไว้ (ถ้ามีใน form) ไม่ก็ไม่ส่ง
+      ...(isEdit
+        ? {}
+        : { batchCode: `BATCH-${Date.now()}` }),
+      products: cleaned,
+      totalProducts: cleaned.length,
+      totalQuantity: cleaned.reduce((sum, p) => sum + safeNumber(p.quantity, 0), 0),
+    };
+
+    // debug
+    console.log('Payload to send:', payload);
+
+    try {
+      if (isEdit) {
+        await axios.put(`/api/product-batches/${id}`, payload);
+        messageApi.success('แก้ไขล็อตสำเร็จ');
+      } else {
+        await axios.post('/api/product-batches', payload);
+        messageApi.success('สร้างล็อตสำเร็จ');
+      }
+      navigate('/batch');
+    } catch (err) {
+      const serverMsg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        err?.response?.data?.details ||
+        err.message;
+      console.error('Form submission failed:', err?.response?.data || err);
+      messageApi.error(`มีบางอย่างผิดพลาด: ${serverMsg}`);
+    }
+  };
+
+  // =========================
+  // Product item component
+  // =========================
+  const ProductFormItem = ({ field, remove }) => {
+    const selectedProductId = Form.useWatch(['products', field.name, 'productId'], { form });
+    const selectedId = toId(selectedProductId);
+    const colorsForProduct = useMemo(
+      () => (Array.isArray(productColors[selectedId]) ? productColors[selectedId] : []),
+      [productColors, selectedId]
+    );
+
+    return (
+      <Space key={field.key} align="baseline" className="mb-2" wrap>
+        <Form.Item
+          name={[field.name, 'productId']}
+          fieldKey={[field.fieldKey, 'productId']}
+          rules={[{ required: true, message: 'Please select a product' }]}
         >
-          เพิ่มสินค้า
+          <Select
+            showSearch
+            placeholder="เลือกสินค้า"
+            style={{ width: 280 }}
+            optionFilterProp="label"
+            filterOption={(input, option) => (option?.label || '').toLowerCase().includes(input.toLowerCase())}
+            onChange={(value) => {
+              // reset color เมื่อเปลี่ยนสินค้า
+              form.setFieldValue(['products', field.name, 'colorId'], undefined);
+              fetchProductColors(value);
+            }}
+            options={products.map((product) => ({
+              value: product._id,
+              label: `${product.sku ?? ''} / ${product.name ?? ''}`.trim(),
+            }))}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name={[field.name, 'colorId']}
+          fieldKey={[field.fieldKey, 'colorId']}
+          rules={[{ required: true, message: 'Please select a color' }]}
+        >
+          <Select
+            placeholder="เลือกสีสินค้า"
+            disabled={colorsForProduct.length === 0}
+            style={{ width: 220 }}
+          >
+            {colorsForProduct.map((color) => (
+              <Option key={color._id} value={color._id}>
+                {color.name}
+              </Option>
+            ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name={[field.name, 'quantity']}
+          fieldKey={[field.fieldKey, 'quantity']}
+          rules={[{ required: true, message: 'Please enter quantity' }]}
+          initialValue={1}
+        >
+          <InputNumber min={1} placeholder="จำนวน" disabled={colorsForProduct.length === 0} />
+        </Form.Item>
+
+        {!isEdit && (
+          <MinusCircleOutlined
+            onClick={() => remove(field.name)}
+            style={{ color: '#ff4d4f' }}
+          />
+        )}
+      </Space>
+    );
+  };
+
+  // =========================
+  // Auto-update batchName safely
+  // =========================
+  const productsInForm = Form.useWatch('products', form) || [];
+
+  useEffect(() => {
+    const selectedNames = productsInForm
+      .filter((p) => p && p.productId)
+      .map((p) => {
+        const pid = toId(p.productId);
+        const found = products.find((prod) => prod._id === pid);
+        return found?.name;
+      })
+      .filter(Boolean);
+    form.setFieldValue('batchName', selectedNames.join(', '));
+  }, [productsInForm, products, form]);
+
+  // ถ้าเป็นหน้า create ให้มี 1 แถวว่างตอนเริ่ม (ครั้งเดียว)
+  useEffect(() => {
+    if (!isEdit) {
+      const current = form.getFieldValue('products');
+      if (!Array.isArray(current) || current.length === 0) {
+        form.setFieldsValue({ products: [{}] });
+      }
+    }
+    // ทำครั้งเดียวหลัง mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
+
+  // =========================
+  // Render
+  // =========================
+  return (
+    <Form form={form} layout="vertical" initialValues={initialValues} onFinish={handleSubmit}>
+      {contextHolder}
+
+      <Form.Item name="batchName" label="ชื่อล็อตสินค้า">
+        <Input placeholder="จะถูกตั้งชื่ออัตโนมัติจากสินค้า" readOnly />
+      </Form.Item>
+
+      <Form.Item name="tags" label="แท็ก">
+        <Select mode="tags" style={{ width: '100%' }} placeholder="ป้อนแท็ก">
+          {category.map((item) => (
+            <Option key={item._id} value={item.name}>
+              {item.name}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Divider>สินค้า</Divider>
+
+      <Form.List name="products">
+        {(fields, { add, remove }) => (
+          <div className="flex flex-col gap-2">
+            {fields.map((field) => (
+              <ProductFormItem key={field.key} field={field} remove={remove} />
+            ))}
+
+            {!isEdit && (
+              <Form.Item>
+                <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
+                  เพิ่มสินค้า
+                </Button>
+              </Form.Item>
+            )}
+          </div>
+        )}
+      </Form.List>
+
+      <Form.Item>
+        <Button type="primary" htmlType="submit">
+          {isEdit ? 'แก้ไขล็อตสินค้า' : 'สร้างล็อตสินค้า'}
         </Button>
-      </div>
-
-      <Table
-        dataSource={filteredProducts}
-        columns={columns}
-        rowKey="_id"
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-      />
-
-      <Modal
-        title={editingProduct ? 'แก้ไขสินค้า' : 'เพิ่มสินค้า'}
-        open={modalVisible}
-        onCancel={() => { setModalVisible(false); setEditingProduct(null); form.resetFields(); }}
-        onOk={() => form.submit()}
-        okText={editingProduct ? 'บันทึก' : 'เพิ่ม'}
-        cancelText="ยกเลิก"
-      >
-        <Form layout="vertical" form={form} onFinish={handleFormSubmit}>
-          <Form.Item name="name" label="ชื่อ" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="description" label="คำอธิบาย">
-            <Input.TextArea />
-          </Form.Item>
-          <Form.Item name="price" label="ราคา">
-            <InputNumber min={0} className="w-full" />
-          </Form.Item>
-          <Form.Item name="weight" label="น้ำหนัก">
-            <Input />
-          </Form.Item>
-          <Form.Item name="material" label="วัสดุ">
-            <Input />
-          </Form.Item>
-          <Form.Item name="dimensions" label="ขนาด">
-            <Input />
-          </Form.Item>
-
-          <Form.Item name="categoryId" label="ประเภท" rules={[{ required: true }]}>
-            <Select
-              placeholder="เลือกประเภท"
-              onChange={(value) => {
-                form.setFieldsValue({ subCategoryId: null });
-                fetchSubCategories(value);
-              }}
-              dropdownRender={(menu) => (
-                <div style={{ maxHeight: 200, overflowY: 'auto' }}>{menu}</div>
-              )}
-            >
-              {categories.map((cat) => (
-                <Option key={cat._id} value={cat._id}>{cat.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="subCategoryId" label="ประเภทย่อย" rules={[{ required: true }]}>
-            <Select placeholder="เลือกประเภทย่อย">
-              {subCategories.map((sub) => (
-                <Option key={sub._id} value={sub._id}>{sub.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          <Form.Item name="roomId" label="ห้อง" rules={[{ required: true }]}>
-            <Select placeholder="เลือกห้อง">
-              {rooms.map((room) => (
-                <Option key={room._id} value={room._id}>{room.name}</Option>
-              ))}
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="ยืนยันการลบ"
-        open={isDeleteModalVisible}
-        onCancel={() => setIsDeleteModalVisible(false)}
-        onOk={() => deleteProduct(deleteProductId)}
-        okText="ลบ"
-        okButtonProps={{ danger: true }}
-      >
-        <p>คุณแน่ใจว่าต้องการลบสินค้านี้หรือไม่?</p>
-      </Modal>
-    </div>
+      </Form.Item>
+    </Form>
   );
 };
 
-export default Product;
+export default ProductBatchForm;

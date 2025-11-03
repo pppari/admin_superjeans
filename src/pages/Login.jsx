@@ -15,17 +15,17 @@ const Login = () => {
     try {
       const res = await axios.post("/api/admin/login", values);
       messageApi.open({
-      type: 'success',
-      content: 'เข้าสู่ระบบสำเร็จ',
-    });
+        type: 'success',
+        content: 'เข้าสู่ระบบสำเร็จ',
+      });
 
       localStorage.setItem("token", res.data.token);
       window.location.href = "/";
     } catch (error) {
       messageApi.open({
-      type: 'error',
-      content: error?.response?.data?.message || "มีบางอย่างผิดพลาด",
-    });
+        type: 'error',
+        content: error?.response?.data?.message || "มีบางอย่างผิดพลาด",
+      });
 
     } finally {
       setLoading(false);
@@ -47,24 +47,30 @@ const Login = () => {
           >
             <Form.Item
               name="email"
-              label="Email"
+              label={
+                <span>
+                  Email<span className="text-red-500">*</span>
+                </span>
+              }
               rules={[{ required: true, message: "Please input your email!" }]}
+              required={false} // ปิด * อัตโนมัติ
             >
               <Input prefix={<UserOutlined />} placeholder="Email" />
             </Form.Item>
 
             <Form.Item
               name="password"
-              label="Password"
-              rules={[
-                { required: true, message: "Please input your password!" },
-              ]}
+              label={
+                <span>
+                  Password<span className="text-red-500">*</span>
+                </span>
+              }
+              rules={[{ required: true, message: "Please input your password!" }]}
+              required={false} // ปิด * อัตโนมัติ
             >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="Password"
-              />
+              <Input.Password prefix={<LockOutlined />} placeholder="Password" />
             </Form.Item>
+
             <div className="flex justify-end mb-4">
               <Link to="/forgot">ลืมรหัสผ่าน</Link>
             </div>
@@ -83,7 +89,7 @@ const Login = () => {
       </div>
 
       <div className="hidden md:block relative bg-cover bg-center" style={{ backgroundImage: `url(${Cover})` }}>
-        <div style={{background: "rgba(0, 0, 0, 0.5)"}} className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
+        <div style={{ background: "rgba(0, 0, 0, 0.5)" }} className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
           <h2 className="text-3xl font-bold mb-2">Furniture Super Jeans</h2>
           <p className="text-lg">ระบบหลังบ้านและคลังสินค้า</p>
         </div>
