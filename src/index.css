@@ -1,0 +1,28 @@
+@import "tailwindcss";
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body{
+    margin: 0;
+    font-family: 'IBM Plex Sans Thai', sans-serif;
+}
+
+.ant-checkbox-wrapper {
+    background: none !important;
+  }
+
+  @media print {
+    /* Apply padding to the entire printable content */W
+    .print-content {
+        padding: 20mm; /* Apply a general padding of 20mm (2cm) on all sides */
+        margin: 0;
+        box-sizing: border-box; /* Ensure padding is inside the box */
+      }
+  
+    /* Optionally, you can hide non-essential elements like buttons */
+    .no-print {
+      display: none;
+    }
+  }
+  
