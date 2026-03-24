@@ -164,7 +164,7 @@ const Dashboard = () => {
       'รอจัดส่ง': 'gold',
       'อยู่ระหว่างจัดส่ง': 'orange',
       'จัดส่งแล้ว': 'green',
-      'ยกเลิก': 'rad',
+      'ยกเลิก': 'red',
     };
     return <Tag color={colors[status]}>{status}</Tag>;
   };
