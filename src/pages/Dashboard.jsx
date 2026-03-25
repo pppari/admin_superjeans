@@ -273,7 +273,7 @@ const Dashboard = () => {
             />
             <Bar
               dataKey={activeGraph === 'revenue' ? 'revenue' : 'count'}
-              fill={activeGraph === 'revenue' ? '#6366f1' : '#f97316'}
+              fill={activeGraph === 'revenue' ? '#ff3a3a' : '#f97316'}
               barSize={40}
             />
           </BarChart>
